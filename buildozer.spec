@@ -10,5 +10,5 @@ requirements = python3,kivy
 android.archs = arm64-v8a
 android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk
 android.ndk = 25b
-
+android.build_tools = 34.0.0
 android.permissions = INTERNET
