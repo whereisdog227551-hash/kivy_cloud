@@ -15,9 +15,9 @@ jobs:
       - name: Checkout source code into container
         uses: actions/checkout@v4
 
-      # 容器内部已经预装 buildozer、python‑for‑android、jdk17、android sdk ndk，不要apt、不要venv
       - name: Build debug apk
         run: |
+          export BUILDOZER_ALLOW_ROOT=1
           buildozer android debug --android.build_tools=34.0.0 -- --jobs 2
 
       - name: Upload built APK
