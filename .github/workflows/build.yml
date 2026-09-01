@@ -8,61 +8,19 @@ on:
 jobs:
   build_apk:
     runs-on: ubuntu-22.04
+    container: ghcr.io/kivy/buildozer:latest
     timeout-minutes: 120
 
     steps:
-      - name: Checkout source
+      - name: Checkout source code into container
         uses: actions/checkout@v4
 
-      - name: Install system dependencies
+      # 容器内部已经预装 buildozer、python‑for‑android、jdk17、android sdk ndk，不要apt、不要venv
+      - name: Build debug apk
         run: |
-          sudo apt update
-          sudo apt install -y openjdk-17-jdk git python3 python3-venv python3-pip build-essential libssl-dev autoconf libtool pkg-config zlib1g-dev unzip wget
+          buildozer android debug --android.build_tools=34.0.0 -- --jobs 2
 
-      - name: Pre‑download complete Android SDK (skip sdkmanager license popup)
-        run: |
-          mkdir -p ~/.buildozer/android/platform
-          cd ~/.buildozer/android/platform
-          export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-          mkdir -p $ANDROID_HOME
-
-          # 预下载已经包含 build‑tools;34.0.0 平台工具，完全不调用sdkmanager
-          wget -q https://dl.google.com/android/repository/platform-tools_r34.0.5-linux.zip
-          unzip -q platform-tools_r34.0.5-linux.zip -d $ANDROID_HOME
-
-          # 手动下载 build‑tools 34.0.0
-          wget -q https://dl.google.com/android/repository/build-tools_r34.0.0-linux.zip
-          unzip -q build-tools_r34.0.0-linux.zip -d $ANDROID_HOME/build-tools
-
-          # 下载 ndk r25b
-          wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip
-          unzip -q android-ndk-r25b-linux.zip
-          mv android-ndk-r25b ~/.buildozer/android/platform/android-ndk-r25b
-
-      - name: Create python venv & install buildozer
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install buildozer==1.5.0 python-for-android==2024.01.21 cython
-
-      - name: Show memory before build
-        run: free -h
-
-      - name: Build android debug APK
-        run: |
-          source venv/bin/activate
-          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-          export ANDROID_NDK_HOME=$HOME/.buildozer/android/platform/android-ndk-r25b
-          # 强制参数，阻止p4a调用sdkmanager联网安装build‑tools
-          buildozer android debug --android.build_tools=34.0.0 --android.ndk_path=$ANDROID_NDK_HOME -- --jobs 2
-
-      - name: Show memory after build
-        if: always()
-        run: free -h
-
-      - name: Upload APK artifact
+      - name: Upload built APK
         uses: actions/upload-artifact@v4
         with:
           name: kivy-app-apk
