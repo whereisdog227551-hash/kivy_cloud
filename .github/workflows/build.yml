@@ -1,51 +1,47 @@
-name: Build Kivy APK
+name: Buildozer Android APK
+
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
 jobs:
   build_apk:
     runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
     steps:
-      - name: Checkout source code
+      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config libffi-dev libssl-dev wget
+          sudo apt install -y openjdk-17-jdk git python3 python3-venv python3-pip build-essential libssl-dev autoconf libtool pkg-config zlib1g-dev
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install buildozer
+      - name: Create python venv & install buildozer
         run: |
-          python -m pip install --upgrade pip
-          pip install buildozer
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install buildozer==1.5.0 python-for-android==2024.01.21 cython
 
-      - name: Manually fetch android cmdline‑tools & accept licenses
-        run: |
-          SDK_ROOT=/home/runner/.buildozer/android/platform/android-sdk
-          JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          export JAVA_HOME
-          mkdir -p $SDK_ROOT/cmdline-tools
-          cd $SDK_ROOT/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
-          unzip -q commandlinetools-linux-11076708_latest.zip
-          mv cmdline-tools latest
-          rm commandlinetools-linux-11076708_latest.zip
-          ln -s $SDK_ROOT/cmdline-tools/latest $SDK_ROOT/tools
-          yes | $SDK_ROOT/tools/bin/sdkmanager --licenses --sdk_root=$SDK_ROOT
+      - name: Show memory before build
+        run: free -h
 
       - name: Build android debug APK
         run: |
+          source venv/bin/activate
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          buildozer android debug
+          # -- --jobs 2 限制p4a内部编译并发，缓解OOM
+          buildozer android debug -- --jobs 2
 
-      - name: Upload generated APK
+      - name: Show memory after build
+        if: always()
+        run: free -h
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: kivy-apk
+          name: kivy-app-apk
           path: bin/*.apk
