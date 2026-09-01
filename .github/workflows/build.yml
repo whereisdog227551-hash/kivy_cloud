@@ -36,7 +36,8 @@ jobs:
           unzip -q commandlinetools-linux-11076708_latest.zip
           mv cmdline-tools latest
           rm commandlinetools-linux-11076708_latest.zip
-          yes | $SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=$SDK_ROOT
+          ln -s $SDK_ROOT/cmdline-tools/latest $SDK_ROOT/tools
+          yes | $SDK_ROOT/tools/bin/sdkmanager --licenses --sdk_root=$SDK_ROOT
 
       - name: Build android debug APK
         run: |
