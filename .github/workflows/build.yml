@@ -17,7 +17,21 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y openjdk-17-jdk git python3 python3-venv python3-pip build-essential libssl-dev autoconf libtool pkg-config zlib1g-dev
+          sudo apt install -y openjdk-17-jdk git python3 python3-venv python3-pip build-essential libssl-dev autoconf libtool pkg-config zlib1g-dev unzip wget
+
+      # 手动下载Android SDK command‑line‑tools，自动接受license，解决CI交互确认弹窗
+      - name: Install Android SDK cmdline tools & accept licenses
+        run: |
+          mkdir -p ~/.buildozer/android/platform
+          cd ~/.buildozer/android/platform
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q commandlinetools-linux-11076708_latest.zip -d cmdline-tools
+          mv cmdline-tools/cmdline-tools cmdline-tools/latest || true
+          export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
+          mkdir -p $ANDROID_HOME/licenses
+          # 写入license hash，自动同意协议，跳过交互y/n
+          echo "24333f8a63b6825ea9c5514f83c2829b00972985" > $ANDROID_HOME/licenses/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c90986d3468" > $ANDROID_HOME/licenses/android-sdk-preview-license
 
       - name: Create python venv & install buildozer
         run: |
@@ -33,7 +47,7 @@ jobs:
         run: |
           source venv/bin/activate
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          # -- --jobs 2 限制p4a内部编译并发，缓解OOM
+          export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
           buildozer android debug -- --jobs 2
 
       - name: Show memory after build
