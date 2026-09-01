@@ -9,15 +9,15 @@ jobs:
   build_apk:
     runs-on: ubuntu-22.04
     container: ghcr.io/kivy/buildozer:latest
-    timeout-minutes: 120
+    timeout-minutes: 180
 
     steps:
       - name: Checkout source code into container
         uses: actions/checkout@v4
 
-      - name: Build debug apk (pipe yes to skip root prompt)
+      - name: Build debug apk (pipe yes to skip root prompt, jobs=1 avoid OOM)
         run: |
-          yes | buildozer android debug --android.build_tools=34.0.0 -- --jobs 2
+          yes | buildozer android debug --android.build_tools=34.0.0 -- --jobs 1
 
       - name: Upload built APK
         uses: actions/upload-artifact@v4
