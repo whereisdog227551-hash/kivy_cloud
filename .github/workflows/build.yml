@@ -28,6 +28,8 @@ jobs:
       - name: Manually fetch android cmdline‑tools & accept licenses
         run: |
           SDK_ROOT=/home/runner/.buildozer/android/platform/android-sdk
+          JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          export JAVA_HOME
           mkdir -p $SDK_ROOT/cmdline-tools
           cd $SDK_ROOT/cmdline-tools
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
@@ -37,7 +39,9 @@ jobs:
           yes | $SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses --sdk_root=$SDK_ROOT
 
       - name: Build android debug APK
-        run: buildozer android debug
+        run: |
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          buildozer android debug
 
       - name: Upload generated APK
         uses: actions/upload-artifact@v4
